@@ -1,0 +1,59 @@
+div.main {
+  width: 600px;
+  position: absolute;
+  left: 50%;
+  margin-left: -300px;
+}
+div.framedblue {
+  width: 100%;
+  border-radius: 5px;
+  border: 1px solid #a5d8ff;
+  background-color: #eff8ff;
+  padding: 15px;
+  margin: 5px;
+}
+div.log {
+  font-size: 85%;
+}
+body {
+  font-family: Tahoma, Arial, Sans-serif;
+  font-size: 0.8em;
+  ee-color: #0060aa;
+  color: #004f8c;
+}
+a:link {
+  text-decoration: none; 
+  color: #0066b4;
+}
+a:visited {
+  color: #0066b4;
+  text-decoration: none; 
+}
+a:hover { 
+  text-decoration: underline; 
+  color: #0066b4; 
+}
+table {
+  font-size: 1em;
+}
+.small {
+  font-size: 80%;  
+}
+div.picture {
+  display:inline-block;  
+  width: 130px;
+  padding: 5px;
+  margin-right: 5px;
+  margin-bottom: 15px;
+  word-wrap: break-word;
+  vertical-align: top;
+}
+input.checkboxonpicture {
+  vertical-align: top;
+}
+textarea {
+  width: 100%;
+}
+.right {
+  float: right;
+}

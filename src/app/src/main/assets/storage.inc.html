@@ -1,0 +1,17 @@
+<div class="framedblue">
+  <table>
+  <tr><td><b>${storage.name}</b></td><td></td></tr>
+  <tr><td><font class="small">${storage.usage}</font></td><td></td></tr> 
+  <tr><td><font class="small">${storage.path}</font></td><td></td></tr> 
+  <tr><td>&nbsp;</td><td></td></tr>
+  ${storage.folders:folder}
+  <tr><td>&nbsp;</td><td></td></tr>
+  </table>
+  <a href="javascript:void(0);" onclick="document.getElementById('form${storage.id}').style.display='inline';">
+     Создать папку</a>  
+  <form id="form${storage.id}" style="display: none;" method="get" action="filemgr.html">
+    <input type="text" name="mkdir" value="Новая папка">
+    <input type="hidden" name="folder" value="${storage.path}">
+    <input type="submit" value="ОК">
+  </form>
+</div>
