@@ -33,16 +33,16 @@ public class TabletCanvasUtils {
 		WindowManager wm = (WindowManager) RevivedTabletApp.getContext().getSystemService(Context.WINDOW_SERVICE);
 		Display disp = wm.getDefaultDisplay();
 		disp.getMetrics(dm);
-		int dispWidth = Integer.valueOf(dm.widthPixels);
-		int dispHeight = Integer.valueOf(dm.heightPixels + getNavBarHeight(resources));
+		int dispWidth = dm.widthPixels;
+		int dispHeight = dm.heightPixels + getNavBarHeight(resources);
 		if (dispWidth < dispHeight) {
 			int p = dispWidth;
 			dispWidth = dispHeight;
 			dispHeight = p;
 		};
 		
-		displayWidth = Integer.valueOf(dispWidth);
-		displayHeight = Integer.valueOf(dispHeight);
+		displayWidth = dispWidth;
+		displayHeight = dispHeight;
 
 		
 	}

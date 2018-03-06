@@ -113,7 +113,7 @@ public class BatteryWidget implements Widget, Runnable {
 		registerReceiver();
 	}
 
-	public void updateBattaryStatus() {
+	private void updateBattaryStatus() {
 		IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
 		Intent batteryStatus = RevivedTabletApp.getContext().registerReceiver(null, ifilter);
 

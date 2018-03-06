@@ -101,7 +101,7 @@ public class Storages {
         if (isAllAvailable())
             return storages;
         else {
-            List<Storage> res = new ArrayList();
+            List<Storage> res = new ArrayList<>();
             for (Storage s: storages)
                 if (s.isAvailable())
                     res.add(s);

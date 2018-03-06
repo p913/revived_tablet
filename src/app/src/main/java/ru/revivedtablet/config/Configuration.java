@@ -66,7 +66,7 @@ public class Configuration {
     private boolean firstLoad = false;
     private boolean paused = true;
 
-    private List<String> log  = new LinkedList<>();
+    private final List<String> log  = new LinkedList<>();
     private SimpleDateFormat fmtLogDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     private static final Configuration instance = new Configuration();
@@ -396,8 +396,23 @@ public class Configuration {
 
         @Override
         public LuaValue call(LuaValue arg) {
-            log(arg.tojstring());
+            StringBuilder sb = new StringBuilder();
+            logLuaValue(sb, arg);
+            log(sb.toString());
             return NIL;
+        }
+
+        private void logLuaValue(StringBuilder sb, LuaValue value) {
+            if (value.istable()) {
+                sb.append("{");
+                LuaTable table = value.checktable();
+                for (LuaValue v: table.keys()) {
+                    logLuaValue(sb.append(v.tojstring()).append("="), table.get(v));
+                    sb.append(",");
+                }
+                sb.append("}");
+            } else
+                sb.append(value.tojstring());
         }
 
     }

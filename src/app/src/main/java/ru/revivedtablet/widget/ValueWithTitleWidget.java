@@ -20,6 +20,7 @@ public class ValueWithTitleWidget extends PlacedInLineWidget {
 	
 	private String title = "???";
 	private String value = "???";
+	private boolean visible = true;
 
 	private int width;
 	private int height;
@@ -51,11 +52,13 @@ public class ValueWithTitleWidget extends PlacedInLineWidget {
 
 	@Override
 	public void draw(Canvas canvas) {
-		canvas.drawRect(rect, paintFill);
-		canvas.drawText(title, ImageUtils.URGE_PADDING_SMALL + rect.left,
-				rect.top + ImageUtils.URGE_PADDING_SMALL + ImageUtils.URGE_TEXT_SIZE_NORMAL, paintTitle);
-		canvas.drawText(value, ImageUtils.URGE_PADDING_SMALL + rect.left,
-				rect.top + ImageUtils.URGE_PADDING_SMALL * 2 + ImageUtils.URGE_TEXT_SIZE_NORMAL + ImageUtils.URGE_TEXT_SIZE_BIG, paintValue);
+		if (visible) {
+			canvas.drawRect(rect, paintFill);
+			canvas.drawText(title, ImageUtils.URGE_PADDING_SMALL + rect.left,
+					rect.top + ImageUtils.URGE_PADDING_SMALL + ImageUtils.URGE_TEXT_SIZE_NORMAL, paintTitle);
+			canvas.drawText(value, ImageUtils.URGE_PADDING_SMALL + rect.left,
+					rect.top + ImageUtils.URGE_PADDING_SMALL * 2 + ImageUtils.URGE_TEXT_SIZE_NORMAL + ImageUtils.URGE_TEXT_SIZE_BIG, paintValue);
+		}
 	}
 
 	private void calculateWidthAndHeight() {
@@ -74,6 +77,8 @@ public class ValueWithTitleWidget extends PlacedInLineWidget {
 
 	public void setTitle(String title) {
 		this.title = title;
+		this.visible = true;
+		calculateWidthAndHeight();
 		if (invalidateBroker != null)
 			invalidateBroker.invalidate();
 	}
@@ -84,7 +89,16 @@ public class ValueWithTitleWidget extends PlacedInLineWidget {
 
 	public void setValue(String value) {
 		this.value = value;
+		this.visible = true;
         calculateWidthAndHeight();
+		if (invalidateBroker != null)
+			invalidateBroker.invalidate();
+	}
+
+	public void hide() {
+		this.visible = false;
+		width = 0;
+		height = 0;
 		if (invalidateBroker != null)
 			invalidateBroker.invalidate();
 	}

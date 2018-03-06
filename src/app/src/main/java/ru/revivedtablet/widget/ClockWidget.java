@@ -39,7 +39,7 @@ public class ClockWidget implements Widget, Runnable {
 	
 	private Calendar cal = Calendar.getInstance();
 	
-	Handler h = new Handler(Looper.getMainLooper());
+	private Handler h = new Handler(Looper.getMainLooper());
 
 	public ClockWidget() {
 		timePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -121,7 +121,7 @@ public class ClockWidget implements Widget, Runnable {
 		
 	}
 	
-	public void updateTime() {
+	private void updateTime() {
 		boolean needInvalidate = false;
 		
 		if (timeNewPosCounter++ > TIME_POS_MAX_TICKS) {
