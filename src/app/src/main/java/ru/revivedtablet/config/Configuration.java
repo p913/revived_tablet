@@ -22,7 +22,9 @@ import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.OneArgFunction;
+import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.JsePlatform;
 
@@ -392,27 +394,31 @@ public class Configuration {
         }
     }
 
-    public class LuaToLogBridge extends OneArgFunction {
+    public class LuaToLogBridge extends VarArgFunction {
 
         @Override
-        public LuaValue call(LuaValue arg) {
+        public LuaValue invoke(Varargs args) {
             StringBuilder sb = new StringBuilder();
-            logLuaValue(sb, arg);
+            logLuaValue(sb, args);
             log(sb.toString());
             return NIL;
         }
 
-        private void logLuaValue(StringBuilder sb, LuaValue value) {
-            if (value.istable()) {
-                sb.append("{");
-                LuaTable table = value.checktable();
-                for (LuaValue v: table.keys()) {
-                    logLuaValue(sb.append(v.tojstring()).append("="), table.get(v));
-                    sb.append(",");
-                }
-                sb.append("}");
-            } else
-                sb.append(value.tojstring());
+        private void logLuaValue(StringBuilder sb, Varargs values) {
+            for (int i = 1; i <= values.narg(); i++) {
+                LuaValue value = values.arg(i);
+                if (value.istable()) {
+                    sb.append("{");
+                    LuaTable table = value.checktable();
+                    for (LuaValue v : table.keys()) {
+                        logLuaValue(sb.append(v.tojstring()).append("="), table.get(v));
+                    }
+                    sb.append("}");
+                } else
+                    sb.append(value.tojstring());
+
+                sb.append(" ");
+            }
         }
 
     }
