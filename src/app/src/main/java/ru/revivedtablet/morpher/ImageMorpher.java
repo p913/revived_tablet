@@ -12,7 +12,7 @@ public interface ImageMorpher {
 	 * Последний шаг не должен рисовать конечную преобразованную картинку -
 	 * это сделает на следующем шаге сам вью.  
 	 */
-	public int getStepCount();
+	int getStepCount();
 	
 	
 	/**
@@ -21,10 +21,10 @@ public interface ImageMorpher {
 	 * @param canvas 
 	 * @param step Шаг от 1 до {@link getStepCount()} 
 	 */
-	public void drawStep(Bitmap bmpBackground, Bitmap bmpForeground, Rect rectBackground, Rect rectForeground, Canvas canvas, int step);
+	void drawStep(Bitmap bmpBackground, Bitmap bmpForeground, Rect rectBackground, Rect rectForeground, Canvas canvas, int step);
 	
 	/**
 	 * Освободить выделенные ресурсы, которые были выделены в процессе выполнения шагов.
 	 */
-	public void release(); 
+	void release();
 }

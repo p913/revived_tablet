@@ -102,8 +102,7 @@ public class WeatherWidget implements Widget {
 	};	
 
 	public WeatherWidget(WeatherRemoteSource source) {
-		this.cityId = cityId;
-		
+
 		weatherProvider = new WeatherProvider(source);
 
 		statusTextPaint = new Paint(Paint.ANTI_ALIAS_FLAG);

@@ -29,6 +29,7 @@ public class WebServerImpl extends NanoHTTPD {
 	private static final String PAGE_FILE_MANAGER = "filemgr.html";
 	private static final String PAGE_FILE_CONFIG = "config.html";
 	private static final String PAGE_FILE_LOG_VIEW = "logview.html";
+	private static final String URI_EVENTS = "/events/";
 
     private static final Pattern SSI_VARIABLE_REGEXP = Pattern.compile("\\$\\{(\\w+)\\.?(\\w*):?([\\w]*)\\}");
 
@@ -121,6 +122,9 @@ public class WebServerImpl extends NanoHTTPD {
 		} else if (uri.toLowerCase().endsWith(PAGE_FILE_LOG_VIEW)) {
 			vars.put("log", Configuration.getInstance().getLog());
 			return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_LOG_VIEW), vars));
+		} else if (uri.equals(URI_EVENTS)) {
+			Configuration.getInstance().notifyNewEvent(uri, method.name(), parms, headers);
+			return newFixedLengthResponse(Response.Status.OK, "text/plain", "");
 		}
 
 		return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_INDEX), vars));

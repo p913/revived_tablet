@@ -15,6 +15,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -28,6 +29,7 @@ public class HttpLib extends TwoArgFunction {
         library.set("get", new HttpGetMethod() );
         library.set("post", new HttpPostMethod() );
         library.set("request", new HttpRequestMethod() );
+        library.set("encodeurl", new EncodeUrlMethod() );
         env.set("http", library );
         return library;
     }
@@ -207,4 +209,14 @@ public class HttpLib extends TwoArgFunction {
         }
     }
 
+    private class EncodeUrlMethod extends OneArgFunction {
+        @Override
+        public LuaValue call(LuaValue arg) {
+            try {
+                return LuaValue.valueOf(URLEncoder.encode(arg.tojstring(), "UTF-8"));
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package ru.revivedtablet.config;
 
 
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -23,7 +24,6 @@ import org.luaj.vm2.LuaFunction;
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
-import org.luaj.vm2.lib.OneArgFunction;
 import org.luaj.vm2.lib.VarArgFunction;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.JsePlatform;
@@ -38,8 +38,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 public class Configuration {
@@ -48,6 +50,7 @@ public class Configuration {
     private static final int MSG_LOAD_CONFIG = 1000;
     private static final int MSG_SAVE_CONFIG = 1001;
     private static final int MSG_PROCESS_LUA_CODE = 1002;
+    private static final int MSG_PROCESS_EVENT = 1003;
 
     private static final int MAX_LOG_COUNT = 100;
 
@@ -56,6 +59,8 @@ public class Configuration {
     private volatile List<Widget> widgets = new ArrayList<>();
 
     private List<TaskWrapper> tasks = new ArrayList<>();
+
+    private EventHandlerWrapper eventHandler;
 
     private List<ConfigurationChangeListener> changeListeners = new Vector<>();
 
@@ -68,7 +73,7 @@ public class Configuration {
     private boolean firstLoad = false;
     private boolean paused = true;
 
-    private final List<String> log  = new LinkedList<>();
+    private final List<String> log = new LinkedList<>();
     private SimpleDateFormat fmtLogDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 
     private static final Configuration instance = new Configuration();
@@ -87,10 +92,13 @@ public class Configuration {
 
                     break;
                 case MSG_SAVE_CONFIG:
-                    saveLuaCode((String)msg.obj);
+                    saveLuaCode((String) msg.obj);
                     break;
                 case MSG_PROCESS_LUA_CODE:
-                    processLuaCode((String)msg.obj);
+                    processLuaCode((String) msg.obj);
+                    break;
+                case MSG_PROCESS_EVENT:
+                    processEvent(msg.getData());
                     break;
             }
 
@@ -158,12 +166,13 @@ public class Configuration {
         if (!sms.isnil()) {
             sms.set("receiver", LuaValue.NIL);
         }
-        for (TaskWrapper t: this.tasks) {
+        for (TaskWrapper t : this.tasks) {
             handler.removeCallbacks(t);
         }
         this.tasks.clear();
         notifyConfigurationChange(this.widgets, empty);
         this.widgets = empty;
+        this.eventHandler = null;
 
         try {
             LuaValue chunk = globals.load(code);
@@ -171,7 +180,7 @@ public class Configuration {
             if (!cfg.get("widgets").isnil()) {
                 LuaTable widgets = cfg.get("widgets").checktable();
 
-                for (LuaValue v: widgets.keys()) {
+                for (LuaValue v : widgets.keys()) {
                     try {
                         LuaValue vv = widgets.get(v);
                         if (vv.isuserdata()) {
@@ -189,7 +198,7 @@ public class Configuration {
                     public int compare(Widget o1, Widget o2) {
                         long c1 = (o1 instanceof PlacedInLineWidget) ? ((PlacedInLineWidget) o1).getCreationOrder() : 0;
                         long c2 = (o2 instanceof PlacedInLineWidget) ? ((PlacedInLineWidget) o2).getCreationOrder() : 0;
-                        return (int)(c1 - c2);
+                        return (int) (c1 - c2);
                     }
                 });
             } else
@@ -207,11 +216,17 @@ public class Configuration {
             } else
                 log("Нет таблицы планировщика задач tasks={...}");
 
+            if (!cfg.get("events").isnil()) {
+                LuaFunction eventsHandlerFunc = cfg.get("events").checkfunction();
+                this.eventHandler = new EventHandlerWrapper(eventsHandlerFunc);
+            } else
+                log("Нет обработчика входящих запросов events=function(e) ... end");
+
             this.widgets = tempWidgets;
             notifyConfigurationChange(empty, this.widgets);
 
             if (!paused)
-                for (TaskWrapper t: this.tasks) {
+                for (TaskWrapper t : this.tasks) {
                     handler.postDelayed(t, INITIAL_TASK_START_DELAY);
                 }
         } catch (LuaError e) {
@@ -248,7 +263,7 @@ public class Configuration {
 
     public void pause() {
         paused = true;
-        for (TaskWrapper t: this.tasks) {
+        for (TaskWrapper t : this.tasks) {
             handler.removeCallbacks(t);
         }
     }
@@ -263,6 +278,32 @@ public class Configuration {
                 handler.postDelayed(t, INITIAL_TASK_START_DELAY);
             }
         }
+    }
+
+    public void notifyNewEvent(String uri, String method, Map<String, String> params, Map<String, String> headers) {
+        Message msg = new Message();
+        msg.what = MSG_PROCESS_EVENT;
+
+        Bundle bundle = new Bundle();
+        bundle.putString("uri", uri);
+        bundle.putString("method", method);
+        HashMap<String, String> paramsSerializable = new HashMap<>();
+        paramsSerializable.putAll(params);
+        bundle.putSerializable("params", paramsSerializable);
+        HashMap<String, String> headersSerializable = new HashMap<>();
+        headersSerializable.putAll(headers);
+        bundle.putSerializable("headers", headersSerializable);
+
+        msg.setData(bundle);
+        handler.sendMessageAtFrontOfQueue(msg);
+    }
+
+    private void processEvent(Bundle bundle) {
+        if (eventHandler != null)
+            eventHandler.run(bundle.getString("uri"),
+                bundle.getString("method"),
+                (HashMap<String, String>)bundle.getSerializable("params"),
+                (HashMap<String, String>)bundle.getSerializable("headers"));
     }
 
     private void log(String msg) {
@@ -285,7 +326,7 @@ public class Configuration {
                     .append(". ")
                     .append(e.getMessage())
                     .append(" <pre>");
-            for (StackTraceElement s: e.getStackTrace())
+            for (StackTraceElement s : e.getStackTrace())
                 sb.append(s.toString()).append("<br>");
             sb.append("</pre>");
             log.add(sb.toString());
@@ -295,7 +336,7 @@ public class Configuration {
     public String getLog() {
         StringBuilder sb = new StringBuilder();
         synchronized (log) {
-            for (String d: log) {
+            for (String d : log) {
                 sb.append(d);
             }
         }
@@ -308,7 +349,7 @@ public class Configuration {
 
     public void addChangeListener(ConfigurationChangeListener l) {
         changeListeners.add(l);
-        l.onChange(new ArrayList<Widget>(), widgets);
+        //l.onChange(new ArrayList<Widget>(), widgets);
     }
 
     public void removeChangeListener(ConfigurationChangeListener l) {
@@ -316,7 +357,7 @@ public class Configuration {
     }
 
     private void notifyConfigurationChange(List<Widget> old, List<Widget> neww) {
-        for (ConfigurationChangeListener l: changeListeners)
+        for (ConfigurationChangeListener l : changeListeners)
             l.onChange(old, neww);
     }
 
@@ -346,7 +387,7 @@ public class Configuration {
             } else if (type.equals("terrameteo") && param1 != null && !param1.isEmpty()) {
                 log("Создан виджет прогноза погоды, источник: проект ТерраМетео");
                 return new WeatherWidget(new TerraMeteoSource(param1));
-            } else if (type.equals("pogoda.com") && param1 != null && !param1.isEmpty() && param2 != null && !param2.isEmpty() ) {
+            } else if (type.equals("pogoda.com") && param1 != null && !param1.isEmpty() && param2 != null && !param2.isEmpty()) {
                 log("Создан виджет прогноза погоды, источник: pogoda.com");
                 return new WeatherWidget(new PogodaComSource(param1, param2));
             } else if (type.equals("inline") && param1 != null && !param1.isEmpty()) {
@@ -373,9 +414,9 @@ public class Configuration {
     }
 
     private class TaskWrapper implements Runnable {
-        private int interval;
+        private final int interval;
 
-        private LuaFunction function;
+        private final LuaFunction function;
 
         public TaskWrapper(int interval, LuaFunction func) {
             this.interval = interval;
@@ -393,6 +434,34 @@ public class Configuration {
             handler.postDelayed(this, interval * 1000);
         }
     }
+
+    private class EventHandlerWrapper {
+        private final LuaFunction function;
+
+        public EventHandlerWrapper(LuaFunction func) {
+            this.function = func;
+        }
+
+        public void run(String uri, String method, Map<String, String> params, Map<String, String> headers) {
+            try {
+                LuaTable arg = LuaValue.tableOf(new LuaValue[] {
+                        LuaValue.valueOf("params"), LuaValue.tableOf(),
+                        LuaValue.valueOf("headers"), LuaValue.tableOf()});
+                arg.set("uri", uri);
+                arg.set("method", method);
+                for (String p : params.keySet())
+                    arg.get("params").set(p, params.get(p));
+                for (String h : headers.keySet())
+                    arg.get("headers").set(h, headers.get(h));
+
+                function.call(arg);
+            } catch (LuaError e) {
+                log("Ошибка при обработке входящего запроса", e);
+                Log.e("Lua fail notifyNewEvent handler", e.getMessage());
+            }
+        }
+    }
+
 
     public class LuaToLogBridge extends VarArgFunction {
 
@@ -422,7 +491,6 @@ public class Configuration {
         }
 
     }
-
 
 
 }

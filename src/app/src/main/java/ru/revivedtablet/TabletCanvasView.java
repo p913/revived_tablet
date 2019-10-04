@@ -125,8 +125,9 @@ public class TabletCanvasView extends View implements Configuration.Configuratio
 	}
 	
 	public void resume() {
-		for (Widget w: Configuration.getInstance().getWidgets())
+		for (Widget w: Configuration.getInstance().getWidgets()) {
 			w.resume();
+		}
 
 		Configuration.getInstance().resume();
 
