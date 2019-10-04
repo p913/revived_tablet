@@ -136,6 +136,12 @@ public class WebServerImpl extends NanoHTTPD {
 			vars.put("log", Configuration.getInstance().getLog());
 			return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_LOG_VIEW), vars));
 		} else if (session.getUri().contains(URI_EVENTS)) {
+            try {
+                //Необходимо для получения параметров из тела запроса для POST & x-www-form-urlencoded
+                session.parseBody(new HashMap<String, String>());
+            } catch (Exception e) {
+                Log.e("Parse body error", e.getMessage(), e);
+            }
 			Configuration.getInstance().notifyNewEvent(session.getUri(), session.getMethod().name(),
                     session.getRemoteIpAddress(), session.getRemoteHostName(), session.getParms(), session.getHeaders());
 			return newFixedLengthResponse(Response.Status.OK, "text/plain", "");
