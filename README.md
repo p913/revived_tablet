@@ -105,4 +105,4 @@ end
 return config
 ```
 
-Более подробно о [заданиях](https://github.com/p913/revived_tablet/wiki/Tasks) и доступных [библиотеках](https://github.com/p913/revived_tablet/wiki/Library) (сейчас их 2 - для СМС и Http) см. в wiki проекта.
+Более подробно о [заданиях](https://github.com/p913/revived_tablet/wiki/Tasks) и доступных [библиотеках](https://github.com/p913/revived_tablet/wiki/Library) см. в wiki проекта.
