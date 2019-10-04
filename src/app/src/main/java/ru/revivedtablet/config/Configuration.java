@@ -280,12 +280,14 @@ public class Configuration {
         }
     }
 
-    public void notifyNewEvent(String uri, String method, Map<String, String> params, Map<String, String> headers) {
+    public void notifyNewEvent(String uri, String method, String remoteIp, String remoteHost, Map<String, String> params, Map<String, String> headers) {
         Message msg = new Message();
         msg.what = MSG_PROCESS_EVENT;
 
         Bundle bundle = new Bundle();
         bundle.putString("uri", uri);
+        bundle.putString("remoteIp", remoteIp);
+        bundle.putString("remoteHost", remoteHost);
         bundle.putString("method", method);
         HashMap<String, String> paramsSerializable = new HashMap<>();
         paramsSerializable.putAll(params);
@@ -301,9 +303,11 @@ public class Configuration {
     private void processEvent(Bundle bundle) {
         if (eventHandler != null)
             eventHandler.run(bundle.getString("uri"),
-                bundle.getString("method"),
-                (HashMap<String, String>)bundle.getSerializable("params"),
-                (HashMap<String, String>)bundle.getSerializable("headers"));
+                    bundle.getString("method"),
+                    bundle.getString("remoteIp"),
+                    bundle.getString("remoteHost"),
+                    (HashMap<String, String>)bundle.getSerializable("params"),
+                    (HashMap<String, String>)bundle.getSerializable("headers"));
     }
 
     private void log(String msg) {
@@ -442,13 +446,15 @@ public class Configuration {
             this.function = func;
         }
 
-        public void run(String uri, String method, Map<String, String> params, Map<String, String> headers) {
+        public void run(String uri, String method, String remoteIp, String remoteHost, Map<String, String> params, Map<String, String> headers) {
             try {
                 LuaTable arg = LuaValue.tableOf(new LuaValue[] {
                         LuaValue.valueOf("params"), LuaValue.tableOf(),
                         LuaValue.valueOf("headers"), LuaValue.tableOf()});
                 arg.set("uri", uri);
                 arg.set("method", method);
+                arg.set("remoteIp", remoteIp);
+                arg.set("remoteHost", remoteHost);
                 for (String p : params.keySet())
                     arg.get("params").set(p, params.get(p));
                 for (String h : headers.keySet())
@@ -457,7 +463,7 @@ public class Configuration {
                 function.call(arg);
             } catch (LuaError e) {
                 log("Ошибка при обработке входящего запроса", e);
-                Log.e("Lua fail notifyNewEvent handler", e.getMessage());
+                Log.e("Lua fail events handler", e.getMessage());
             }
         }
     }

@@ -56,42 +56,48 @@ public class WebServerImpl extends NanoHTTPD {
 	}
 
 	@Override
-	public Response serve(String uri, Method method, Map<String, String> headers, Map<String, String> parms, Map<String, String> files) {
+	public Response serve(IHTTPSession session) {
 		Map<String, Object> vars = new HashMap<>();
 		vars.putAll(this.vars);
-		if (uri.endsWith(STYLE_SHEETS))
-			return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(STYLE_SHEETS), vars));
-		else if (method == Method.GET && uri.endsWith(PAGE_FILE_MANAGER) && parms.containsKey("folder")) {
-            File folder = new File(parms.get("folder"));
+		if (session.getUri().endsWith(STYLE_SHEETS))
+			return newFixedLengthResponse(Response.Status.OK, "text/css", prepareHtml(getHtmlFromAssets(STYLE_SHEETS), vars));
+		else if (session.getMethod() == Method.GET && session.getUri().endsWith(PAGE_FILE_MANAGER) && session.getParms().containsKey("folder")) {
+            File folder = new File(session.getParms().get("folder"));
             if (checkPathSafety(folder)) {
-                if (parms.containsKey("mkdir") && !parms.get("mkdir").contains(File.pathSeparator) ) {
-                    folder = new File(folder, parms.get("mkdir"));
+                if (session.getParms().containsKey("mkdir") && !session.getParms().get("mkdir").contains(File.pathSeparator) ) {
+                    folder = new File(folder, session.getParms().get("mkdir"));
                     folder.mkdirs();
                 }
                 vars.put("folder", new Storages.Folder(folder));
                 return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_MANAGER), vars));
             }
 
-		} else if (method == Method.POST && uri.endsWith(PAGE_FILE_MANAGER) && parms.containsKey("folder")) {
-            File folder = new File(parms.get("folder"));
+		} else if (session.getMethod() == Method.POST && session.getUri().endsWith(PAGE_FILE_MANAGER) && session.getParms().containsKey("folder")) {
+            File folder = new File(session.getParms().get("folder"));
 			Storages.Storage storage = Storages.getInstance().findStorage(folder);
 			if (storage != null) {
-				for (String fname : files.keySet()) {
-					if (!parms.get(fname).isEmpty()) {
-						Log.d("Uploaded file", parms.get(fname));
-						try {
-							File dest = new File(folder, parms.get(fname).replaceAll("\\.\\w+$", ".jpeg"));
-							resizePicture(new File(files.get(fname)), dest);
-							createThumbnail(dest);
-						} catch (IOException e) {
-							Log.e("Error on receive img", e.getMessage());
-						}
-					}
-				}
+                Map<String, String> files = new HashMap<>();
+                try {
+                    session.parseBody(files);
+                    for (String fname : files.keySet()) {
+                        if (!session.getParms().get(fname).isEmpty()) {
+                            Log.d("Uploaded file", session.getParms().get(fname));
+                            try {
+                                File dest = new File(folder, session.getParms().get(fname).replaceAll("\\.\\w+$", ".jpeg"));
+                                resizePicture(new File(files.get(fname)), dest);
+                                createThumbnail(dest);
+                            } catch (IOException e) {
+                                Log.e("Error on receive img", e.getMessage());
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e("Parse body error", e.getMessage(), e);
+                }
 
-				if (parms.containsKey("delconfirm") && parms.get("delconfirm").equals("on"))
-					for (String filetodel : parms.keySet())
-						if (!filetodel.equals("delconfirm") && parms.get(filetodel).equals("on"))
+				if (session.getParms().containsKey("delconfirm") && session.getParms().get("delconfirm").equals("on"))
+					for (String filetodel : session.getParms().keySet())
+						if (!filetodel.equals("delconfirm") && session.getParms().get(filetodel).equals("on"))
 							deleteFileWithThumbnail(new File(folder, filetodel + ImageUtils.PICTURE_EXTENSION));
 
 				storage.updateUsages();
@@ -99,18 +105,25 @@ public class WebServerImpl extends NanoHTTPD {
             vars.put("folder", new Storages.Folder(folder));
             return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_MANAGER), vars));
 
-		} else if (method == Method.GET && uri.endsWith(PAGE_FILE_CONFIG)) {
+		} else if (session.getMethod() == Method.GET && session.getUri().endsWith(PAGE_FILE_CONFIG)) {
 			vars.put("luacode", Configuration.getInstance().getLuaCode());
 			return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_CONFIG), vars));
 
-        } else if (method == Method.POST && uri.endsWith(PAGE_FILE_CONFIG) && parms.containsKey("luacode")) {
-			String config = parms.get("luacode");
-			vars.put("luacode", config);
-			Configuration.getInstance().setLuaCode(config);
-			return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_CONFIG), vars));
-
-        } else if (uri.toLowerCase().endsWith(ImageUtils.PICTURE_EXTENSION)) {
-			File f = new File(uri + ImageUtils.THUMBNAIL_EXTENSION);
+        } else if (session.getMethod() == Method.POST && session.getUri().endsWith(PAGE_FILE_CONFIG)) {
+            try {
+                session.parseBody(new HashMap<String, String>());
+            } catch (Exception e) {
+                Log.e("Parse body error", e.getMessage(), e);
+            }
+            String config = session.getParms().get("luacode");
+            if (config != null) {
+                vars.put("luacode", config);
+                Configuration.getInstance().setLuaCode(config);
+            } else
+                vars.put("luacode", Configuration.getInstance().getLuaCode());
+            return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_CONFIG), vars));
+        } else if (session.getUri().toLowerCase().endsWith(ImageUtils.PICTURE_EXTENSION)) {
+			File f = new File(session.getUri() + ImageUtils.THUMBNAIL_EXTENSION);
 			if (checkPathSafety(f) && f.exists()) {
 				try {
 					InputStream fs = new FileInputStream(f);
@@ -119,11 +132,12 @@ public class WebServerImpl extends NanoHTTPD {
 				}
 			}
 			return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "");
-		} else if (uri.toLowerCase().endsWith(PAGE_FILE_LOG_VIEW)) {
+		} else if (session.getUri().endsWith(PAGE_FILE_LOG_VIEW)) {
 			vars.put("log", Configuration.getInstance().getLog());
 			return newFixedLengthResponse(prepareHtml(getHtmlFromAssets(PAGE_FILE_LOG_VIEW), vars));
-		} else if (uri.equals(URI_EVENTS)) {
-			Configuration.getInstance().notifyNewEvent(uri, method.name(), parms, headers);
+		} else if (session.getUri().contains(URI_EVENTS)) {
+			Configuration.getInstance().notifyNewEvent(session.getUri(), session.getMethod().name(),
+                    session.getRemoteIpAddress(), session.getRemoteHostName(), session.getParms(), session.getHeaders());
 			return newFixedLengthResponse(Response.Status.OK, "text/plain", "");
 		}
 
