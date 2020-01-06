@@ -44,6 +44,8 @@ public class TerraMeteoSource implements WeatherRemoteSource {
         precipitationMap.put("слабый снег", 40);
         precipitationMap.put("снег", 50);
         precipitationMap.put("сильный снег", 60);
+        precipitationMap.put("небольшой снег , переходящий в дождь", 70);
+        precipitationMap.put("снег , переходящий в дождь", 70);
 
         iconsMap = new HashMap<>();
         iconsMap.put(100, "skc_n");
@@ -67,6 +69,9 @@ public class TerraMeteoSource implements WeatherRemoteSource {
         iconsMap.put(160, "bkn_psn_n");
         iconsMap.put(161, "bkn_psn_n");
         iconsMap.put(162, "ovc_psn");
+        iconsMap.put(170, "bkn_rs_n");
+        iconsMap.put(171, "bkn_rs_n");
+        iconsMap.put(172, "ovc_rs");
 
         iconsMap.put(200, "skc_d");
         iconsMap.put(201, "bkn_d");
@@ -89,8 +94,11 @@ public class TerraMeteoSource implements WeatherRemoteSource {
         iconsMap.put(260, "bkn_psn_d");
         iconsMap.put(261, "bkn_psn_d");
         iconsMap.put(262, "ovc_psn");
+        iconsMap.put(270, "bkn_rs_d");
+        iconsMap.put(271, "bkn_rs_d");
+        iconsMap.put(272, "ovc_rs");
 
-        frPattern = Pattern.compile("(штиль|([СЮЗВ]{1,2}),?[СЮЗВ]{0,2} (\\d+) м/с),.+,.+, (.+), (во 2й половине )?(.+)");
+        frPattern = Pattern.compile("(штиль|([СЮЗВ]{1,2}),?[СЮЗВ]{0,2} (\\d+) м/с),[^,]+,[^,]+, ([^,]+), (в 1-й|во 2й)?( половине)?(.+)");
     }
 
     private String url;
@@ -195,7 +203,7 @@ public class TerraMeteoSource implements WeatherRemoteSource {
                                     }
 
                                     Integer ovc = overcastMap.get(m.group(4));
-                                    Integer pr = precipitationMap.get(m.group(6));
+                                    Integer pr = precipitationMap.get(m.group(7));
                                     int key = (ovc==null?0:ovc) + (pr==null?0:pr) + (isNight?MAPPING_NIGHT:MAPPING_DAY);
                                     if (iconsMap.containsKey(key))
                                         icon = iconsMap.get(key);

@@ -57,7 +57,7 @@ public class HttpLib extends TwoArgFunction {
                     }
                 }
             } catch (IOException e) {
-                Log.e("Http GET error", e.getMessage());
+                Log.e("Http GET error", url.toString(),  e);
             } finally {
                 if (urlConnection != null)
                     urlConnection.disconnect();
@@ -105,7 +105,7 @@ public class HttpLib extends TwoArgFunction {
                     }
                 }
             } catch (IOException e) {
-                Log.e("Http POST error", e.getMessage());
+                Log.e("Http POST error", url.toString(), e);
             } finally {
                 if (urlConnection != null)
                     urlConnection.disconnect();
@@ -188,8 +188,7 @@ public class HttpLib extends TwoArgFunction {
                         br.close();
                     }
                 } catch (IOException e) {
-                    Log.e("Http request error", method + " " + url + " " + e.getMessage());
-                    //e.printStackTrace();
+                    Log.e("Http request error", method + " " + url, e);
                     return LuaValue.varargsOf(new LuaValue[] {
                             LuaValue.valueOf(0),
                             LuaValue.valueOf(e.getMessage()),
