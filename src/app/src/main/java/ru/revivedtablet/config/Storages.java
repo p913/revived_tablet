@@ -4,8 +4,9 @@ import android.content.Context;
 import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
+import androidx.core.content.ContextCompat;
+
 
 import ru.revivedtablet.ImageUtils;
 import ru.revivedtablet.RevivedTabletApp;

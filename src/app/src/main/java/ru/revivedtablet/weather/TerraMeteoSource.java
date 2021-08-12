@@ -98,7 +98,7 @@ public class TerraMeteoSource implements WeatherRemoteSource {
         iconsMap.put(271, "bkn_rs_d");
         iconsMap.put(272, "ovc_rs");
 
-        frPattern = Pattern.compile("(штиль|([СЮЗВ]{1,2}),?[СЮЗВ]{0,2} (\\d+) м/с),[^,]+,[^,]+, ([^,]+), (в 1-й|во 2-й)?( половине)?(.+)");
+        frPattern = Pattern.compile("(штиль|([СЮЗВ]{1,2}),?[СЮЗВ]{0,2} (\\d+) м/с),[^,]+,[^,]+, ([^,]+), (в 1-й|во 2-й)?( половине )?(.+)");
     }
 
     private String url;

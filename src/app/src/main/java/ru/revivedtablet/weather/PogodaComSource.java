@@ -44,7 +44,7 @@ public class PogodaComSource implements WeatherRemoteSource {
 
     protected boolean updateForecastDetailed(SQLiteDatabase db) {
         try {
-            URL url = new URL(String.format("HttpLib://api.pogoda.com/index.php?api_lang=%s&localidad=%s&affiliate_id=%s&v=2",
+            URL url = new URL(String.format("Http://api.pogoda.com/index.php?api_lang=%s&localidad=%s&affiliate_id=%s&v=2",
                     language, location, affiliate));
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             try {
@@ -108,7 +108,7 @@ public class PogodaComSource implements WeatherRemoteSource {
 
     protected boolean updateForecastShort(SQLiteDatabase db, Date startDate) {
         try {
-            URL url = new URL(String.format("HttpLib://api.pogoda.com/index.php?api_lang=%s&localidad=%s&affiliate_id=%s",
+            URL url = new URL(String.format("Http://api.pogoda.com/index.php?api_lang=%s&localidad=%s&affiliate_id=%s",
                     language, location, affiliate));
             HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
             try {
