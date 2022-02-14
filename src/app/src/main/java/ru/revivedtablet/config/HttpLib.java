@@ -23,6 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class HttpLib extends TwoArgFunction {
+    private static final int SOCKET_TIMEOUT_MS = 1000;
+
     @Override
     public LuaValue call(LuaValue modname, LuaValue env) {
         LuaValue library = tableOf();
@@ -41,6 +43,9 @@ public class HttpLib extends TwoArgFunction {
             try {
                 urlConnection = (HttpURLConnection)(new URL(url.tojstring())).openConnection();
                 urlConnection.setUseCaches(false);
+                urlConnection.setConnectTimeout(SOCKET_TIMEOUT_MS);
+                urlConnection.setReadTimeout(SOCKET_TIMEOUT_MS);
+
                 //Log.d("Http GET", "Response code: " + urlConnection.getResponseCode());
                 if (urlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
                     BufferedReader br = new BufferedReader(new InputStreamReader(urlConnection.getInputStream(), "UTF-8"));
@@ -77,6 +82,8 @@ public class HttpLib extends TwoArgFunction {
                 urlConnection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
                 urlConnection.setRequestProperty("charset", "utf-8");
                 urlConnection.setUseCaches(false);
+                urlConnection.setConnectTimeout(SOCKET_TIMEOUT_MS);
+                urlConnection.setReadTimeout(SOCKET_TIMEOUT_MS);
 
                 if (data != null && !data.isnil()) {
                     byte[] postData = data.tojstring().getBytes("UTF-8");
@@ -128,6 +135,8 @@ public class HttpLib extends TwoArgFunction {
                     urlConnection.setRequestMethod(method);
                     urlConnection.setRequestProperty("charset", "utf-8");
                     urlConnection.setUseCaches(false);
+                    urlConnection.setConnectTimeout(SOCKET_TIMEOUT_MS);
+                    urlConnection.setReadTimeout(SOCKET_TIMEOUT_MS);
 
                     if (headers != null) {
                         for (LuaValue key: headers.keys())

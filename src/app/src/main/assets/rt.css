@@ -1,8 +1,6 @@
 div.main {
-  width: 600px;
-  position: absolute;
-  left: 50%;
-  margin-left: -300px;
+  width: 900px;
+  margin: auto;
 }
 div.framedblue {
   width: 100%;

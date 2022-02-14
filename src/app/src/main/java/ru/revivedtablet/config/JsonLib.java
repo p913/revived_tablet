@@ -32,8 +32,9 @@ public class JsonLib extends TwoArgFunction {
         public LuaValue call(LuaValue arg) {
             LuaTable res = LuaTable.tableOf();
             try {
-                JSONObject object = (JSONObject) new JSONTokener(arg.tojstring()).nextValue();
-                addObjectToTable(res, object);
+                Object parsed = new JSONTokener(arg.tojstring()).nextValue();
+                if (parsed instanceof JSONObject)
+                    addObjectToTable(res, (JSONObject)parsed);
             } catch (JSONException e) {
                 Log.e("Json parse", e.getMessage());
                 return null;

@@ -157,6 +157,7 @@ public class Configuration {
     }
 
     private void processLuaCode(String code) {
+        log.clear();
         log("Выполняется Lua-скрипт конфигурации");
 
         List<Widget> tempWidgets = new ArrayList<>();
@@ -318,7 +319,7 @@ public class Configuration {
         }
     }
 
-    private void log(String msg, Exception e) {
+    private void log(String msg, LuaError e) {
         StringBuilder sb = new StringBuilder();
         synchronized (log) {
             while (log.size() >= MAX_LOG_COUNT)
@@ -328,11 +329,7 @@ public class Configuration {
                     .append("] ")
                     .append(msg)
                     .append(". ")
-                    .append(e.getMessage())
-                    .append(" <pre>");
-            for (StackTraceElement s : e.getStackTrace())
-                sb.append(s.toString()).append("<br>");
-            sb.append("</pre>");
+                    .append(e.getMessage());
             log.add(sb.toString());
         }
     }
